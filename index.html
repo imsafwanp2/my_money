@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>My Money</title>
+<style>
+:root{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --accent:#111827;
+  --soft:#eef2ff;
+  --green:#166534;
+  --green-bg:#dcfce7;
+  --red:#b91c1c;
+  --shadow:0 12px 35px rgba(17,24,39,.08);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+}
+button,input,select{font:inherit}
+.wrap{
+  max-width:760px;
+  margin:auto;
+  padding:20px 16px 110px;
+}
+.hero{
+  background:linear-gradient(145deg,#111827,#273449);
+  color:white;
+  border-radius:28px;
+  padding:22px;
+  box-shadow:var(--shadow);
+}
+.hero-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.eyebrow{font-size:12px;color:#cbd5e1;margin-bottom:5px}
+.hero h1{margin:0;font-size:27px;letter-spacing:-.5px}
+.hero p{margin:6px 0 0;color:#cbd5e1;font-size:13px}
+.month{
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.08);
+  color:white;
+  border-radius:13px;
+  padding:9px 10px;
+}
+.hero-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:22px;
+}
+.stat{
+  padding:13px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+}
+.stat .k{font-size:11px;color:#cbd5e1}
+.stat .v{font-size:20px;font-weight:800;margin-top:4px}
+.section{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:22px 2px 10px;
+}
+.section h2{font-size:17px;margin:0}
+.section small{color:var(--muted)}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.bucket{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:16px;
+}
+.bucket-top{
+  display:flex;justify-content:space-between;gap:8px;align-items:flex-start
+}
+.bucket-name{font-weight:800;font-size:15px}
+.bucket-type{font-size:11px;color:var(--muted);margin-top:3px}
+.bucket-value{font-size:22px;font-weight:850;margin:16px 0 10px;letter-spacing:-.4px}
+.bucket-value span{font-size:12px;color:var(--muted);font-weight:600}
+.track{
+  height:8px;border-radius:999px;background:#edf0f4;overflow:hidden
+}
+.fill{
+  height:100%;
+  background:#111827;
+  border-radius:999px;
+}
+.foot{
+  display:flex;justify-content:space-between;
+  margin-top:8px;font-size:11px;color:var(--muted)
+}
+.tx-list{display:flex;flex-direction:column;gap:9px}
+.tx{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:17px;
+  padding:13px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.tx-left{min-width:0}
+.tx-name{font-weight:750}
+.tx-meta{
+  font-size:12px;color:var(--muted);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.tx-right{display:flex;gap:8px;align-items:center}
+.tx-amt{font-weight:850}
+.del{
+  border:0;background:transparent;color:var(--red);
+  font-size:20px;cursor:pointer;padding:4px 6px
+}
+.empty{
+  background:var(--card);border:1px dashed var(--line);
+  border-radius:17px;padding:24px;text-align:center;color:var(--muted)
+}
+.fab{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:20px;
+  width:min(728px,calc(100% - 32px));
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.fab button{
+  min-height:52px;border-radius:16px;border:0;font-weight:800;cursor:pointer;
+  box-shadow:0 12px 30px rgba(17,24,39,.12)
+}
+.fab .secondary{background:white;color:#111827;border:1px solid var(--line)}
+.fab .primary{background:#111827;color:white}
+dialog{
+  border:0;
+  border-radius:24px;
+  width:min(560px,calc(100% - 26px));
+  padding:0;
+  box-shadow:0 30px 80px rgba(0,0,0,.28)
+}
+dialog::backdrop{background:rgba(17,24,39,.54)}
+.modal{padding:20px}
+.modal h3{margin:0;font-size:21px}
+.modal .sub{margin:5px 0 18px;color:var(--muted);font-size:13px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+label{font-size:12px;color:var(--muted);font-weight:750}
+input,select{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:12px 13px;
+  background:#fff;
+  color:var(--text)
+}
+.mode{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:2px
+}
+.mode button{
+  min-height:46px;border:1px solid var(--line);border-radius:13px;
+  background:white;cursor:pointer;font-weight:750
+}
+.mode button.active{
+  background:#111827;color:white;border-color:#111827
+}
+.actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px
+}
+.actions button{
+  min-height:48px;border-radius:13px;border:1px solid var(--line);
+  font-weight:800;cursor:pointer
+}
+.actions .save{background:#111827;color:white;border-color:#111827}
+.hint{
+  margin-top:12px;
+  border-radius:13px;
+  background:#f8fafc;
+  padding:10px 12px;
+  color:var(--muted);
+  font-size:12px
+}
+.setting-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.setting{
+  display:grid;grid-template-columns:1fr 120px;align-items:center;gap:10px
+}
+.setting strong{font-size:14px}
+.setting small{display:block;color:var(--muted);margin-top:2px}
+.top-actions{display:flex;gap:8px}
+.gear{
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.08);color:white;
+  width:42px;height:42px;border-radius:13px;cursor:pointer
+}
+.notice{
+  margin-top:14px;
+  font-size:12px;
+  color:#dbeafe
+}
+@media(max-width:620px){
+  .grid{grid-template-columns:1fr}
+  .hero-grid{grid-template-columns:1fr 1fr}
+  .hero-grid .stat:last-child{grid-column:1/-1}
+  .form{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">PERSONAL BUDGET</div>
+        <h1>My Money</h1>
+        <p>Six buckets. One simple monthly view.</p>
+      </div>
+      <div class="top-actions">
+        <input id="monthPicker" class="month" type="month">
+        <button class="gear" id="settingsBtn" aria-label="Settings">⚙️</button>
+      </div>
+    </div>
+
+    <div class="hero-grid">
+      <div class="stat">
+        <div class="k">Monthly plan</div>
+        <div class="v">$<span id="planTotal">3,900</span></div>
+      </div>
+      <div class="stat">
+        <div class="k">Recorded</div>
+        <div class="v">$<span id="recorded">0</span></div>
+      </div>
+      <div class="stat">
+        <div class="k">Remaining</div>
+        <div class="v">$<span id="remaining">3,900</span></div>
+      </div>
+    </div>
+    <div class="notice">Credit-card rule: record the purchase now; don't record the later card payment again.</div>
+  </section>
+
+  <div class="section">
+    <h2>Monthly buckets</h2>
+    <small id="bucketCount"></small>
+  </div>
+  <div id="bucketGrid" class="grid"></div>
+
+  <div class="section">
+    <h2>Recent activity</h2>
+    <small id="txCount"></small>
+  </div>
+  <div id="txList" class="tx-list"></div>
+</div>
+
+<div class="fab">
+  <button id="transferBtn" class="secondary">✓ Add transfer</button>
+  <button id="expenseBtn" class="primary">＋ Add transaction</button>
+</div>
+
+<dialog id="entryDialog">
+  <form id="entryForm" class="modal" method="dialog">
+    <h3 id="entryTitle">Add transaction</h3>
+    <div class="sub">Choose an existing bucket or create a new one while adding this entry.</div>
+
+    <div class="form">
+      <div class="field">
+        <label>Amount ($)</label>
+        <input id="amount" type="number" min="0.01" step="0.01" required placeholder="42.00">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input id="date" type="date" required>
+      </div>
+
+      <div class="field full">
+        <label>Bucket</label>
+        <div class="mode">
+          <button id="existingMode" type="button" class="active">Use existing bucket</button>
+          <button id="newMode" type="button">Create new bucket</button>
+        </div>
+      </div>
+
+      <div class="field full" id="existingWrap">
+        <label>Existing bucket</label>
+        <select id="category"></select>
+      </div>
+
+      <div class="field full" id="newWrap" style="display:none">
+        <label>New bucket name</label>
+        <input id="newBucket" type="text" maxlength="30" placeholder="Medical, Gifts, Travel...">
+      </div>
+
+      <div class="field full">
+        <label>Note</label>
+        <input id="note" type="text" maxlength="80" placeholder="Costco, rent, India transfer...">
+      </div>
+    </div>
+
+    <div class="hint" id="hint">Example: Costco → $62 → Living → Credit card purchase.</div>
+
+    <div class="actions">
+      <button type="button" id="cancelEntry">Cancel</button>
+      <button class="save" value="default">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="settingsDialog">
+  <form id="settingsForm" class="modal" method="dialog">
+    <h3>Monthly targets</h3>
+    <div class="sub">You can change any target anytime.</div>
+    <div class="setting-list" id="settingsList"></div>
+    <div class="actions">
+      <button type="button" id="cancelSettings">Cancel</button>
+      <button class="save" value="default">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const defaults = {
+  buckets:[
+    {id:'india',name:'🇮🇳 Send India',target:1100,type:'Transfer / support'},
+    {id:'living',name:'🏠 Living',target:1600,type:'Expense'},
+    {id:'future',name:'✈️ Future expenses',target:300,type:'Savings fund'},
+    {id:'investment',name:'📈 Investment',target:200,type:'Investment'},
+    {id:'personal',name:'☕ Personal',target:200,type:'Expense'},
+    {id:'usa',name:'🇺🇸 USA savings',target:500,type:'Savings'}
+  ],
+  entries:[]
+};
+
+let state;
+try{
+  state = JSON.parse(localStorage.getItem('myMoneyV2')) || structuredClone(defaults);
+}catch(e){ state = structuredClone(defaults); }
+
+const monthPicker=document.getElementById('monthPicker');
+const now=new Date();
+const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+monthPicker.value=ym;
+
+function isoToday(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+document.getElementById('date').value=isoToday();
+
+function save(){
+  localStorage.setItem('myMoneyV2',JSON.stringify(state));
+}
+function fmt(v){
+  return Number(v||0).toLocaleString(undefined,{maximumFractionDigits:2});
+}
+function currentEntries(){
+  return state.entries.filter(e=>e.date && e.date.slice(0,7)===monthPicker.value);
+}
+function sumBucket(id){
+  return currentEntries().filter(e=>e.category===id).reduce((s,e)=>s+Number(e.amount),0);
+}
+function esc(s){
+  return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function render(){
+  const total=state.buckets.reduce((s,b)=>s+Number(b.target||0),0);
+  const entries=currentEntries();
+  const recorded=entries.reduce((s,e)=>s+Number(e.amount),0);
+
+  document.getElementById('planTotal').textContent=fmt(total);
+  document.getElementById('recorded').textContent=fmt(recorded);
+  document.getElementById('remaining').textContent=fmt(Math.max(0,total-recorded));
+  document.getElementById('bucketCount').textContent=state.buckets.length+' buckets';
+  document.getElementById('txCount').textContent=entries.length+' entries';
+
+  const grid=document.getElementById('bucketGrid');
+  grid.innerHTML='';
+  state.buckets.forEach(b=>{
+    const used=sumBucket(b.id);
+    const target=Number(b.target||0);
+    const pct=target>0?Math.min(100,(used/target)*100):0;
+    const left=target-used;
+    const el=document.createElement('div');
+    el.className='bucket';
+    el.innerHTML=`
+      <div class="bucket-top">
+        <div>
+          <div class="bucket-name">${esc(b.name)}</div>
+          <div class="bucket-type">${esc(b.type||'Custom')}</div>
+        </div>
+      </div>
+      <div class="bucket-value">$${fmt(used)} <span>/ $${fmt(target)}</span></div>
+      <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="foot">
+        <span>${pct.toFixed(0)}%</span>
+        <span>${left>=0?'$'+fmt(left)+' left':'$'+fmt(Math.abs(left))+' over'}</span>
+      </div>`;
+    grid.appendChild(el);
+  });
+
+  const list=document.getElementById('txList');
+  list.innerHTML='';
+  const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
+  if(!sorted.length){
+    list.innerHTML='<div class="empty">No entries yet this month.</div>';
+  }else{
+    sorted.forEach(e=>{
+      const b=state.buckets.find(x=>x.id===e.category);
+      const el=document.createElement('div');
+      el.className='tx';
+      el.innerHTML=`
+        <div class="tx-left">
+          <div class="tx-name">${esc(e.note || (b?b.name:'Transaction'))}</div>
+          <div class="tx-meta">${esc(b?b.name:'Unknown bucket')} • ${esc(e.date)}</div>
+        </div>
+        <div class="tx-right">
+          <div class="tx-amt">$${fmt(e.amount)}</div>
+          <button class="del" type="button" aria-label="Delete" data-id="${esc(e.id)}">×</button>
+        </div>`;
+      list.appendChild(el);
+    });
+    list.querySelectorAll('.del').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        state.entries=state.entries.filter(e=>e.id!==btn.dataset.id);
+        save();render();
+      });
+    });
+  }
+}
+
+let mode='existing';
+function fillCategories(){
+  const sel=document.getElementById('category');
+  sel.innerHTML='';
+  state.buckets.forEach(b=>{
+    const opt=document.createElement('option');
+    opt.value=b.id; opt.textContent=b.name; sel.appendChild(opt);
+  });
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('existingMode').classList.toggle('active',m==='existing');
+  document.getElementById('newMode').classList.toggle('active',m==='new');
+  document.getElementById('existingWrap').style.display=m==='existing'?'flex':'none';
+  document.getElementById('newWrap').style.display=m==='new'?'flex':'none';
+}
+document.getElementById('existingMode').addEventListener('click',()=>setMode('existing'));
+document.getElementById('newMode').addEventListener('click',()=>setMode('new'));
+
+function openEntry(kind){
+  document.getElementById('entryTitle').textContent=kind==='transfer'?'Add transfer':'Add transaction';
+  document.getElementById('hint').textContent=kind==='transfer'
+    ? 'Use this for India, future-expense savings, investment, or USA savings.'
+    : 'Record purchases on the day you make them, not on the credit-card due date.';
+  document.getElementById('amount').value='';
+  document.getElementById('note').value='';
+  document.getElementById('newBucket').value='';
+  document.getElementById('date').value=isoToday();
+  fillCategories();
+  setMode('existing');
+  document.getElementById('entryDialog').showModal();
+}
+document.getElementById('expenseBtn').addEventListener('click',()=>openEntry('expense'));
+document.getElementById('transferBtn').addEventListener('click',()=>openEntry('transfer'));
+document.getElementById('cancelEntry').addEventListener('click',()=>document.getElementById('entryDialog').close());
+
+document.getElementById('entryForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const amount=Number(document.getElementById('amount').value);
+  const date=document.getElementById('date').value;
+  const note=document.getElementById('note').value.trim();
+  if(!amount || amount<=0 || !date) return;
+
+  let category;
+  if(mode==='existing'){
+    category=document.getElementById('category').value;
+  }else{
+    const name=document.getElementById('newBucket').value.trim();
+    if(!name){ alert('Enter a name for the new bucket.'); return; }
+    const existing=state.buckets.find(b=>b.name.toLowerCase()===name.toLowerCase());
+    if(existing){
+      category=existing.id;
+    }else{
+      const id='custom_'+Date.now();
+      state.buckets.push({id,name:'🆕 '+name,target:0,type:'Custom'});
+      category=id;
+    }
+  }
+
+  state.entries.push({
+    id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random())),
+    amount,date,category,note,createdAt:Date.now()
+  });
+  save();
+  document.getElementById('entryDialog').close();
+  render();
+});
+
+document.getElementById('settingsBtn').addEventListener('click',()=>{
+  const list=document.getElementById('settingsList');
+  list.innerHTML='';
+  state.buckets.forEach(b=>{
+    const row=document.createElement('div');
+    row.className='setting';
+    row.innerHTML=`
+      <div>
+        <strong>${esc(b.name)}</strong>
+        <small>${esc(b.type||'Custom')}</small>
+      </div>
+      <input data-id="${esc(b.id)}" type="number" min="0" step="1" value="${Number(b.target||0)}">`;
+    list.appendChild(row);
+  });
+  document.getElementById('settingsDialog').showModal();
+});
+document.getElementById('cancelSettings').addEventListener('click',()=>document.getElementById('settingsDialog').close());
+document.getElementById('settingsForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  document.querySelectorAll('#settingsList input[data-id]').forEach(inp=>{
+    const b=state.buckets.find(x=>x.id===inp.dataset.id);
+    if(b)b.target=Number(inp.value||0);
+  });
+  save();
+  document.getElementById('settingsDialog').close();
+  render();
+});
+monthPicker.addEventListener('change',render);
+
+render();
+</script>
+</body>
+</html>
