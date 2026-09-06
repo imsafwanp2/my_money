@@ -5,301 +5,161 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111827">
 <title>My Money</title>
-
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="My Money">
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --bg:#f5f7fb;
-  --card:#ffffff;
-  --text:#111827;
-  --muted:#6b7280;
-  --line:#e5e7eb;
-  --accent:#111827;
-  --soft:#eef2ff;
-  --green:#166534;
-  --green-bg:#dcfce7;
-  --red:#b91c1c;
-  --shadow:0 12px 35px rgba(17,24,39,.08);
+  --bg:#f5f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;
+  --dark:#111827;--red:#b91c1c;--green:#166534;--greenbg:#dcfce7;
+  --shadow:0 12px 35px rgba(17,24,39,.08)
 }
 *{box-sizing:border-box}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
-}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
 button,input,select{font:inherit}
-.wrap{
-  max-width:760px;
-  margin:auto;
-  padding:20px 16px 110px;
-}
-.hero{
-  background:linear-gradient(145deg,#111827,#273449);
-  color:white;
-  border-radius:28px;
-  padding:22px;
-  box-shadow:var(--shadow);
-}
-.hero-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-}
+button{cursor:pointer}
+.hidden{display:none!important}
+.auth-shell{min-height:100vh;display:grid;place-items:center;padding:24px}
+.auth-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:28px;padding:26px;box-shadow:var(--shadow)}
+.logo{width:58px;height:58px;border-radius:18px;background:#111827;color:white;display:grid;place-items:center;font-size:27px;margin-bottom:18px}
+.auth-card h1{margin:0;font-size:30px;letter-spacing:-.7px}
+.auth-card p{color:var(--muted);font-size:14px;line-height:1.5}
+.auth-form{display:grid;gap:12px;margin-top:20px}
+label{font-size:12px;color:var(--muted);font-weight:750}
+.field{display:grid;gap:6px}
+input,select{width:100%;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:white;color:var(--text)}
+.auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.btn{min-height:48px;border-radius:13px;font-weight:800;border:1px solid var(--line);background:white}
+.btn.primary{background:#111827;color:white;border-color:#111827}
+.msg{font-size:13px;min-height:18px;margin-top:12px;color:var(--muted)}
+.msg.error{color:var(--red)}
+.msg.good{color:var(--green)}
+.wrap{max-width:760px;margin:auto;padding:20px 16px 110px}
+.hero{background:linear-gradient(145deg,#111827,#273449);color:white;border-radius:28px;padding:22px;box-shadow:var(--shadow)}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .eyebrow{font-size:12px;color:#cbd5e1;margin-bottom:5px}
 .hero h1{margin:0;font-size:27px;letter-spacing:-.5px}
 .hero p{margin:6px 0 0;color:#cbd5e1;font-size:13px}
-.month{
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.08);
-  color:white;
-  border-radius:13px;
-  padding:9px 10px;
-}
-.hero-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-top:22px;
-}
-.stat{
-  padding:13px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:16px;
-}
-.stat .k{font-size:11px;color:#cbd5e1}
-.stat .v{font-size:20px;font-weight:800;margin-top:4px}
-.section{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin:22px 2px 10px;
-}
-.section h2{font-size:17px;margin:0}
-.section small{color:var(--muted)}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.bucket{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:20px;
-  padding:16px;
-}
-.bucket-top{
-  display:flex;justify-content:space-between;gap:8px;align-items:flex-start
-}
-.bucket-name{font-weight:800;font-size:15px}
-.bucket-type{font-size:11px;color:var(--muted);margin-top:3px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.month{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:white;border-radius:13px;padding:9px 10px;max-width:155px}
+.gear,.logout{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:white;height:42px;border-radius:13px}
+.gear{width:42px} .logout{padding:0 12px;font-size:12px;font-weight:750}
+.hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+.stat{padding:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-radius:16px}
+.stat .k{font-size:11px;color:#cbd5e1} .stat .v{font-size:20px;font-weight:800;margin-top:4px}
+.notice{margin-top:14px;font-size:12px;color:#dbeafe}
+.sync{margin-top:9px;font-size:11px;color:#cbd5e1}
+.section{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 10px}
+.section h2{font-size:17px;margin:0} .section small{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bucket{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px}
+.bucket-name{font-weight:800;font-size:15px} .bucket-type{font-size:11px;color:var(--muted);margin-top:3px}
 .bucket-value{font-size:22px;font-weight:850;margin:16px 0 10px;letter-spacing:-.4px}
 .bucket-value span{font-size:12px;color:var(--muted);font-weight:600}
-.track{
-  height:8px;border-radius:999px;background:#edf0f4;overflow:hidden
-}
-.fill{
-  height:100%;
-  background:#111827;
-  border-radius:999px;
-}
-.foot{
-  display:flex;justify-content:space-between;
-  margin-top:8px;font-size:11px;color:var(--muted)
-}
+.track{height:8px;border-radius:999px;background:#edf0f4;overflow:hidden}
+.fill{height:100%;background:#111827;border-radius:999px}
+.foot{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--muted)}
 .tx-list{display:flex;flex-direction:column;gap:9px}
-.tx{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:17px;
-  padding:13px 14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-.tx-left{min-width:0}
-.tx-name{font-weight:750}
-.tx-meta{
-  font-size:12px;color:var(--muted);margin-top:3px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
-}
-.tx-right{display:flex;gap:8px;align-items:center}
-.tx-amt{font-weight:850}
-.del{
-  border:0;background:transparent;color:var(--red);
-  font-size:20px;cursor:pointer;padding:4px 6px
-}
-.empty{
-  background:var(--card);border:1px dashed var(--line);
-  border-radius:17px;padding:24px;text-align:center;color:var(--muted)
-}
-.fab{
-  position:fixed;
-  left:50%;
-  transform:translateX(-50%);
-  bottom:20px;
-  width:min(728px,calc(100% - 32px));
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-.fab button{
-  min-height:52px;border-radius:16px;border:0;font-weight:800;cursor:pointer;
-  box-shadow:0 12px 30px rgba(17,24,39,.12)
-}
-.fab .secondary{background:white;color:#111827;border:1px solid var(--line)}
-.fab .primary{background:#111827;color:white}
-dialog{
-  border:0;
-  border-radius:24px;
-  width:min(560px,calc(100% - 26px));
-  padding:0;
-  box-shadow:0 30px 80px rgba(0,0,0,.28)
-}
+.tx{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tx-left{min-width:0} .tx-name{font-weight:750}
+.tx-meta{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-right{display:flex;gap:8px;align-items:center} .tx-amt{font-weight:850}
+.del{border:0;background:transparent;color:var(--red);font-size:20px;padding:4px 6px}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:17px;padding:24px;text-align:center;color:var(--muted)}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;width:min(728px,calc(100% - 32px));display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fab button{min-height:52px;border-radius:16px;border:0;font-weight:800;box-shadow:0 12px 30px rgba(17,24,39,.12)}
+.fab .secondary{background:white;color:#111827;border:1px solid var(--line)} .fab .primary{background:#111827;color:white}
+dialog{border:0;border-radius:24px;width:min(560px,calc(100% - 26px));padding:0;box-shadow:0 30px 80px rgba(0,0,0,.28)}
 dialog::backdrop{background:rgba(17,24,39,.54)}
-.modal{padding:20px}
-.modal h3{margin:0;font-size:21px}
-.modal .sub{margin:5px 0 18px;color:var(--muted);font-size:13px}
-.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.field{display:flex;flex-direction:column;gap:6px}
-.field.full{grid-column:1/-1}
-label{font-size:12px;color:var(--muted);font-weight:750}
-input,select{
-  width:100%;
-  border:1px solid var(--line);
-  border-radius:13px;
-  padding:12px 13px;
-  background:#fff;
-  color:var(--text)
-}
-.mode{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin-top:2px
-}
-.mode button{
-  min-height:46px;border:1px solid var(--line);border-radius:13px;
-  background:white;cursor:pointer;font-weight:750
-}
-.mode button.active{
-  background:#111827;color:white;border-color:#111827
-}
-.actions{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px
-}
-.actions button{
-  min-height:48px;border-radius:13px;border:1px solid var(--line);
-  font-weight:800;cursor:pointer
-}
+.modal{padding:20px} .modal h3{margin:0;font-size:21px} .modal .sub{margin:5px 0 18px;color:var(--muted);font-size:13px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px} .field.full{grid-column:1/-1}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mode button{min-height:46px;border:1px solid var(--line);border-radius:13px;background:white;font-weight:750}
+.mode button.active{background:#111827;color:white;border-color:#111827}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.actions button{min-height:48px;border-radius:13px;border:1px solid var(--line);font-weight:800}
 .actions .save{background:#111827;color:white;border-color:#111827}
-.hint{
-  margin-top:12px;
-  border-radius:13px;
-  background:#f8fafc;
-  padding:10px 12px;
-  color:var(--muted);
-  font-size:12px
-}
+.hint{margin-top:12px;border-radius:13px;background:#f8fafc;padding:10px 12px;color:var(--muted);font-size:12px}
 .setting-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
-.setting{
-  display:grid;grid-template-columns:1fr 120px;align-items:center;gap:10px
-}
-.setting strong{font-size:14px}
-.setting small{display:block;color:var(--muted);margin-top:2px}
-.top-actions{display:flex;gap:8px}
-.gear{
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(255,255,255,.08);color:white;
-  width:42px;height:42px;border-radius:13px;cursor:pointer
-}
-.notice{
-  margin-top:14px;
-  font-size:12px;
-  color:#dbeafe
-}
+.setting{display:grid;grid-template-columns:1fr 120px;align-items:center;gap:10px}
+.setting strong{font-size:14px} .setting small{display:block;color:var(--muted);margin-top:2px}
+.loading{opacity:.58;pointer-events:none}
 @media(max-width:620px){
   .grid{grid-template-columns:1fr}
   .hero-grid{grid-template-columns:1fr 1fr}
   .hero-grid .stat:last-child{grid-column:1/-1}
-  .form{grid-template-columns:1fr}
-  .field.full{grid-column:auto}
+  .form{grid-template-columns:1fr} .field.full{grid-column:auto}
+  .hero-top{flex-direction:column} .top-actions{width:100%;justify-content:flex-start}
 }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <section class="hero">
-    <div class="hero-top">
-      <div>
-        <div class="eyebrow">PERSONAL BUDGET</div>
-        <h1>My Money</h1>
-        <p>Six buckets. One simple monthly view.</p>
-      </div>
-      <div class="top-actions">
-        <input id="monthPicker" class="month" type="month">
-        <button class="gear" id="settingsBtn" aria-label="Settings">⚙️</button>
-      </div>
-    </div>
 
-    <div class="hero-grid">
-      <div class="stat">
-        <div class="k">Monthly plan</div>
-        <div class="v">$<span id="planTotal">3,900</span></div>
+<section id="authView" class="auth-shell">
+  <div class="auth-card">
+    <div class="logo">💰</div>
+    <h1>My Money</h1>
+    <p>Private cloud-synced budgeting across your phone, Mac, iPad, and other devices.</p>
+    <form id="authForm" class="auth-form">
+      <div class="field">
+        <label>Email</label>
+        <input id="email" type="email" autocomplete="email" required placeholder="you@example.com">
       </div>
-      <div class="stat">
-        <div class="k">Recorded</div>
-        <div class="v">$<span id="recorded">0</span></div>
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters">
       </div>
-      <div class="stat">
-        <div class="k">Remaining</div>
-        <div class="v">$<span id="remaining">3,900</span></div>
+      <div class="auth-actions">
+        <button id="signupBtn" type="button" class="btn">Create account</button>
+        <button id="signinBtn" type="submit" class="btn primary">Sign in</button>
       </div>
-    </div>
-    <div class="notice">Credit-card rule: record the purchase now; don't record the later card payment again.</div>
-  </section>
-
-  <div class="section">
-    <h2>Monthly buckets</h2>
-    <small id="bucketCount"></small>
+    </form>
+    <div id="authMsg" class="msg"></div>
   </div>
-  <div id="bucketGrid" class="grid"></div>
+</section>
 
-  <div class="section">
-    <h2>Recent activity</h2>
-    <small id="txCount"></small>
+<div id="appView" class="hidden">
+  <div class="wrap" id="appWrap">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">PERSONAL BUDGET</div>
+          <h1>My Money</h1>
+          <p id="signedInAs">Cloud synced</p>
+        </div>
+        <div class="top-actions">
+          <input id="monthPicker" class="month" type="month">
+          <button class="gear" id="settingsBtn" aria-label="Settings">⚙️</button>
+          <button class="logout" id="logoutBtn">Sign out</button>
+        </div>
+      </div>
+      <div class="hero-grid">
+        <div class="stat"><div class="k">Monthly plan</div><div class="v">$<span id="planTotal">0</span></div></div>
+        <div class="stat"><div class="k">Recorded</div><div class="v">$<span id="recorded">0</span></div></div>
+        <div class="stat"><div class="k">Remaining</div><div class="v">$<span id="remaining">0</span></div></div>
+      </div>
+      <div class="notice">Credit-card rule: record the purchase now; don't record the later card payment again.</div>
+      <div class="sync" id="syncStatus">Synced with cloud</div>
+    </section>
+
+    <div class="section"><h2>Monthly buckets</h2><small id="bucketCount"></small></div>
+    <div id="bucketGrid" class="grid"></div>
+
+    <div class="section"><h2>Recent activity</h2><small id="txCount"></small></div>
+    <div id="txList" class="tx-list"></div>
   </div>
-  <div id="txList" class="tx-list"></div>
-</div>
 
-<div class="fab">
-  <button id="transferBtn" class="secondary">✓ Add transfer</button>
-  <button id="expenseBtn" class="primary">＋ Add transaction</button>
+  <div class="fab">
+    <button id="transferBtn" class="secondary">✓ Add transfer</button>
+    <button id="expenseBtn" class="primary">＋ Add transaction</button>
+  </div>
 </div>
 
 <dialog id="entryDialog">
   <form id="entryForm" class="modal" method="dialog">
     <h3 id="entryTitle">Add transaction</h3>
-    <div class="sub">Choose an existing bucket or create a new one while adding this entry.</div>
-
+    <div class="sub">Choose an existing bucket or create a new one.</div>
     <div class="form">
-      <div class="field">
-        <label>Amount ($)</label>
-        <input id="amount" type="number" min="0.01" step="0.01" required placeholder="42.00">
-      </div>
-      <div class="field">
-        <label>Date</label>
-        <input id="date" type="date" required>
-      </div>
-
+      <div class="field"><label>Amount ($)</label><input id="amount" type="number" min="0.01" step="0.01" required placeholder="42.00"></div>
+      <div class="field"><label>Date</label><input id="date" type="date" required></div>
       <div class="field full">
         <label>Bucket</label>
         <div class="mode">
@@ -307,262 +167,287 @@ input,select{
           <button id="newMode" type="button">Create new bucket</button>
         </div>
       </div>
-
-      <div class="field full" id="existingWrap">
-        <label>Existing bucket</label>
-        <select id="category"></select>
-      </div>
-
-      <div class="field full" id="newWrap" style="display:none">
-        <label>New bucket name</label>
-        <input id="newBucket" type="text" maxlength="30" placeholder="Medical, Gifts, Travel...">
-      </div>
-
-      <div class="field full">
-        <label>Note</label>
-        <input id="note" type="text" maxlength="80" placeholder="Costco, rent, India transfer...">
-      </div>
+      <div class="field full" id="existingWrap"><label>Existing bucket</label><select id="category"></select></div>
+      <div class="field full hidden" id="newWrap"><label>New bucket name</label><input id="newBucket" type="text" maxlength="30" placeholder="Medical, Gifts, Travel..."></div>
+      <div class="field full"><label>Note</label><input id="note" type="text" maxlength="80" placeholder="Costco, rent, India transfer..."></div>
     </div>
-
-    <div class="hint" id="hint">Example: Costco → $62 → Living → Credit card purchase.</div>
-
-    <div class="actions">
-      <button type="button" id="cancelEntry">Cancel</button>
-      <button class="save" value="default">Save</button>
-    </div>
+    <div class="hint" id="hint">Record purchases on the day you make them.</div>
+    <div class="actions"><button type="button" id="cancelEntry">Cancel</button><button class="save">Save</button></div>
   </form>
 </dialog>
 
 <dialog id="settingsDialog">
   <form id="settingsForm" class="modal" method="dialog">
     <h3>Monthly targets</h3>
-    <div class="sub">You can change any target anytime.</div>
+    <div class="sub">Changes are saved to the cloud and appear on all your devices.</div>
     <div class="setting-list" id="settingsList"></div>
-    <div class="actions">
-      <button type="button" id="cancelSettings">Cancel</button>
-      <button class="save" value="default">Save</button>
-    </div>
+    <div class="actions"><button type="button" id="cancelSettings">Cancel</button><button class="save">Save</button></div>
   </form>
 </dialog>
 
 <script>
-const defaults = {
-  buckets:[
-    {id:'india',name:'🇮🇳 Send India',target:1100,type:'Transfer / support'},
-    {id:'living',name:'🏠 Living',target:1600,type:'Expense'},
-    {id:'future',name:'✈️ Future expenses',target:300,type:'Savings fund'},
-    {id:'investment',name:'📈 Investment',target:200,type:'Investment'},
-    {id:'personal',name:'☕ Personal',target:200,type:'Expense'},
-    {id:'usa',name:'🇺🇸 USA savings',target:500,type:'Savings'}
-  ],
-  entries:[]
-};
+const SUPABASE_URL = "https://nbwsurkskmkwecslonxu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_uOl_B8dZY0BFrKvuxFm9tw_yCiyqDwr";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+});
 
-let state;
-try{
-  state = JSON.parse(localStorage.getItem('myMoneyV2')) || structuredClone(defaults);
-}catch(e){ state = structuredClone(defaults); }
+const DEFAULT_BUCKETS = [
+  {name:'🇮🇳 Send India',target:1100,type:'Transfer / support'},
+  {name:'🏠 Living',target:1600,type:'Expense'},
+  {name:'✈️ Future expenses',target:300,type:'Savings fund'},
+  {name:'📈 Investment',target:200,type:'Investment'},
+  {name:'☕ Personal',target:200,type:'Expense'},
+  {name:'🇺🇸 USA savings',target:500,type:'Savings'}
+];
 
-const monthPicker=document.getElementById('monthPicker');
-const now=new Date();
-const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-monthPicker.value=ym;
+let user = null;
+let buckets = [];
+let transactions = [];
+let bucketMode = 'existing';
 
-function isoToday(){
-  const d=new Date();
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-document.getElementById('date').value=isoToday();
+const $ = id => document.getElementById(id);
+const authView=$('authView'), appView=$('appView'), appWrap=$('appWrap');
 
-function save(){
-  localStorage.setItem('myMoneyV2',JSON.stringify(state));
+function setAuthMsg(text, kind='') {
+  const el=$('authMsg'); el.textContent=text; el.className='msg '+kind;
 }
-function fmt(v){
-  return Number(v||0).toLocaleString(undefined,{maximumFractionDigits:2});
+function setSync(text) { $('syncStatus').textContent=text; }
+function fmt(v) { return Number(v||0).toLocaleString(undefined,{maximumFractionDigits:2}); }
+function esc(s) { return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function isoToday() {
+  const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-function currentEntries(){
-  return state.entries.filter(e=>e.date && e.date.slice(0,7)===monthPicker.value);
+function currentYM() {
+  const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function sumBucket(id){
-  return currentEntries().filter(e=>e.category===id).reduce((s,e)=>s+Number(e.amount),0);
-}
-function esc(s){
-  return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function monthBounds(ym) {
+  const [y,m]=ym.split('-').map(Number);
+  const last=new Date(y,m,0).getDate();
+  return {start:`${ym}-01`, end:`${ym}-${String(last).padStart(2,'0')}`};
 }
 
-function render(){
-  const total=state.buckets.reduce((s,b)=>s+Number(b.target||0),0);
-  const entries=currentEntries();
-  const recorded=entries.reduce((s,e)=>s+Number(e.amount),0);
+async function seedBucketsIfNeeded() {
+  const {data,error} = await sb.from('buckets').select('*').order('created_at');
+  if(error) throw error;
+  if(data.length) { buckets=data; return; }
+  const rows=DEFAULT_BUCKETS.map(b=>({...b,user_id:user.id}));
+  const {error:insErr}=await sb.from('buckets').insert(rows);
+  if(insErr) throw insErr;
+  const {data:again,error:againErr}=await sb.from('buckets').select('*').order('created_at');
+  if(againErr) throw againErr;
+  buckets=again;
+}
 
-  document.getElementById('planTotal').textContent=fmt(total);
-  document.getElementById('recorded').textContent=fmt(recorded);
-  document.getElementById('remaining').textContent=fmt(Math.max(0,total-recorded));
-  document.getElementById('bucketCount').textContent=state.buckets.length+' buckets';
-  document.getElementById('txCount').textContent=entries.length+' entries';
+async function loadData() {
+  if(!user) return;
+  appWrap.classList.add('loading');
+  setSync('Syncing…');
+  try {
+    await seedBucketsIfNeeded();
+    const bounds=monthBounds($('monthPicker').value || currentYM());
+    const {data,error}=await sb.from('transactions')
+      .select('*')
+      .gte('transaction_date',bounds.start)
+      .lte('transaction_date',bounds.end)
+      .order('transaction_date',{ascending:false})
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+    transactions=data || [];
+    render();
+    setSync('Synced with cloud');
+  } catch(err) {
+    console.error(err);
+    setSync('Sync error: '+err.message);
+  } finally {
+    appWrap.classList.remove('loading');
+  }
+}
 
-  const grid=document.getElementById('bucketGrid');
-  grid.innerHTML='';
-  state.buckets.forEach(b=>{
-    const used=sumBucket(b.id);
+function render() {
+  const total=buckets.reduce((s,b)=>s+Number(b.target||0),0);
+  const recorded=transactions.reduce((s,t)=>s+Number(t.amount||0),0);
+  $('planTotal').textContent=fmt(total);
+  $('recorded').textContent=fmt(recorded);
+  $('remaining').textContent=fmt(Math.max(0,total-recorded));
+  $('bucketCount').textContent=buckets.length+' buckets';
+  $('txCount').textContent=transactions.length+' entries';
+
+  const grid=$('bucketGrid'); grid.innerHTML='';
+  buckets.forEach(b=>{
+    const used=transactions.filter(t=>t.bucket_id===b.id).reduce((s,t)=>s+Number(t.amount||0),0);
     const target=Number(b.target||0);
-    const pct=target>0?Math.min(100,(used/target)*100):0;
+    const pct=target>0?Math.min(100,(used/target)*100):(used>0?100:0);
     const left=target-used;
-    const el=document.createElement('div');
-    el.className='bucket';
+    const el=document.createElement('div'); el.className='bucket';
     el.innerHTML=`
-      <div class="bucket-top">
-        <div>
-          <div class="bucket-name">${esc(b.name)}</div>
-          <div class="bucket-type">${esc(b.type||'Custom')}</div>
-        </div>
-      </div>
+      <div class="bucket-name">${esc(b.name)}</div>
+      <div class="bucket-type">${esc(b.type||'Custom')}</div>
       <div class="bucket-value">$${fmt(used)} <span>/ $${fmt(target)}</span></div>
       <div class="track"><div class="fill" style="width:${pct}%"></div></div>
-      <div class="foot">
-        <span>${pct.toFixed(0)}%</span>
-        <span>${left>=0?'$'+fmt(left)+' left':'$'+fmt(Math.abs(left))+' over'}</span>
-      </div>`;
+      <div class="foot"><span>${pct.toFixed(0)}%</span><span>${left>=0?'$'+fmt(left)+' left':'$'+fmt(Math.abs(left))+' over'}</span></div>`;
     grid.appendChild(el);
   });
 
-  const list=document.getElementById('txList');
-  list.innerHTML='';
-  const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
-  if(!sorted.length){
+  const list=$('txList'); list.innerHTML='';
+  if(!transactions.length) {
     list.innerHTML='<div class="empty">No entries yet this month.</div>';
-  }else{
-    sorted.forEach(e=>{
-      const b=state.buckets.find(x=>x.id===e.category);
-      const el=document.createElement('div');
-      el.className='tx';
+  } else {
+    transactions.forEach(t=>{
+      const b=buckets.find(x=>x.id===t.bucket_id);
+      const el=document.createElement('div'); el.className='tx';
       el.innerHTML=`
         <div class="tx-left">
-          <div class="tx-name">${esc(e.note || (b?b.name:'Transaction'))}</div>
-          <div class="tx-meta">${esc(b?b.name:'Unknown bucket')} • ${esc(e.date)}</div>
+          <div class="tx-name">${esc(t.note || (b?b.name:'Transaction'))}</div>
+          <div class="tx-meta">${esc(b?b.name:'Unknown bucket')} • ${esc(t.transaction_date)}</div>
         </div>
         <div class="tx-right">
-          <div class="tx-amt">$${fmt(e.amount)}</div>
-          <button class="del" type="button" aria-label="Delete" data-id="${esc(e.id)}">×</button>
+          <div class="tx-amt">$${fmt(t.amount)}</div>
+          <button class="del" type="button" aria-label="Delete" data-id="${esc(t.id)}">×</button>
         </div>`;
       list.appendChild(el);
     });
-    list.querySelectorAll('.del').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        state.entries=state.entries.filter(e=>e.id!==btn.dataset.id);
-        save();render();
-      });
-    });
+    list.querySelectorAll('.del').forEach(btn=>btn.addEventListener('click',async()=>{
+      if(!confirm('Delete this entry?')) return;
+      setSync('Deleting…');
+      const {error}=await sb.from('transactions').delete().eq('id',btn.dataset.id);
+      if(error) { setSync('Delete failed: '+error.message); return; }
+      await loadData();
+    }));
   }
 }
 
-let mode='existing';
-function fillCategories(){
-  const sel=document.getElementById('category');
-  sel.innerHTML='';
-  state.buckets.forEach(b=>{
-    const opt=document.createElement('option');
-    opt.value=b.id; opt.textContent=b.name; sel.appendChild(opt);
+function fillCategories() {
+  const sel=$('category'); sel.innerHTML='';
+  buckets.forEach(b=>{
+    const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; sel.appendChild(o);
   });
 }
-function setMode(m){
-  mode=m;
-  document.getElementById('existingMode').classList.toggle('active',m==='existing');
-  document.getElementById('newMode').classList.toggle('active',m==='new');
-  document.getElementById('existingWrap').style.display=m==='existing'?'flex':'none';
-  document.getElementById('newWrap').style.display=m==='new'?'flex':'none';
+function setBucketMode(mode) {
+  bucketMode=mode;
+  $('existingMode').classList.toggle('active',mode==='existing');
+  $('newMode').classList.toggle('active',mode==='new');
+  $('existingWrap').classList.toggle('hidden',mode!=='existing');
+  $('newWrap').classList.toggle('hidden',mode!=='new');
 }
-document.getElementById('existingMode').addEventListener('click',()=>setMode('existing'));
-document.getElementById('newMode').addEventListener('click',()=>setMode('new'));
-
-function openEntry(kind){
-  document.getElementById('entryTitle').textContent=kind==='transfer'?'Add transfer':'Add transaction';
-  document.getElementById('hint').textContent=kind==='transfer'
-    ? 'Use this for India, future-expense savings, investment, or USA savings.'
+function openEntry(kind) {
+  $('entryTitle').textContent=kind==='transfer'?'Add transfer':'Add transaction';
+  $('hint').textContent=kind==='transfer'
+    ? 'Use this for India support, future-expense savings, investment, or USA savings.'
     : 'Record purchases on the day you make them, not on the credit-card due date.';
-  document.getElementById('amount').value='';
-  document.getElementById('note').value='';
-  document.getElementById('newBucket').value='';
-  document.getElementById('date').value=isoToday();
-  fillCategories();
-  setMode('existing');
-  document.getElementById('entryDialog').showModal();
+  $('amount').value=''; $('note').value=''; $('newBucket').value=''; $('date').value=isoToday();
+  fillCategories(); setBucketMode('existing'); $('entryDialog').showModal();
 }
-document.getElementById('expenseBtn').addEventListener('click',()=>openEntry('expense'));
-document.getElementById('transferBtn').addEventListener('click',()=>openEntry('transfer'));
-document.getElementById('cancelEntry').addEventListener('click',()=>document.getElementById('entryDialog').close());
 
-document.getElementById('entryForm').addEventListener('submit',e=>{
+async function boot(session) {
+  user=session?.user || null;
+  if(!user) {
+    appView.classList.add('hidden'); authView.classList.remove('hidden'); return;
+  }
+  authView.classList.add('hidden'); appView.classList.remove('hidden');
+  $('signedInAs').textContent=user.email || 'Cloud synced';
+  if(!$('monthPicker').value) $('monthPicker').value=currentYM();
+  await loadData();
+}
+
+$('authForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const amount=Number(document.getElementById('amount').value);
-  const date=document.getElementById('date').value;
-  const note=document.getElementById('note').value.trim();
-  if(!amount || amount<=0 || !date) return;
+  setAuthMsg('Signing in…');
+  const email=$('email').value.trim(), password=$('password').value;
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error) { setAuthMsg(error.message,'error'); return; }
+  setAuthMsg('');
+  await boot(data.session);
+});
 
-  let category;
-  if(mode==='existing'){
-    category=document.getElementById('category').value;
-  }else{
-    const name=document.getElementById('newBucket').value.trim();
-    if(!name){ alert('Enter a name for the new bucket.'); return; }
-    const existing=state.buckets.find(b=>b.name.toLowerCase()===name.toLowerCase());
-    if(existing){
-      category=existing.id;
-    }else{
-      const id='custom_'+Date.now();
-      state.buckets.push({id,name:'🆕 '+name,target:0,type:'Custom'});
-      category=id;
+$('signupBtn').addEventListener('click',async()=>{
+  const email=$('email').value.trim(), password=$('password').value;
+  if(!email || password.length<6) { setAuthMsg('Enter a valid email and a password of at least 6 characters.','error'); return; }
+  setAuthMsg('Creating account…');
+  const {data,error}=await sb.auth.signUp({
+    email,password,
+    options:{emailRedirectTo:window.location.origin+window.location.pathname}
+  });
+  if(error) { setAuthMsg(error.message,'error'); return; }
+  if(data.session) {
+    setAuthMsg('Account created.','good'); await boot(data.session);
+  } else {
+    setAuthMsg('Account created. Check your email to confirm it, then sign in.','good');
+  }
+});
+
+$('logoutBtn').addEventListener('click',async()=>{ await sb.auth.signOut(); user=null; await boot(null); });
+$('existingMode').addEventListener('click',()=>setBucketMode('existing'));
+$('newMode').addEventListener('click',()=>setBucketMode('new'));
+$('expenseBtn').addEventListener('click',()=>openEntry('expense'));
+$('transferBtn').addEventListener('click',()=>openEntry('transfer'));
+$('cancelEntry').addEventListener('click',()=>$('entryDialog').close());
+
+$('entryForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const amount=Number($('amount').value), date=$('date').value, note=$('note').value.trim();
+  if(!(amount>0) || !date) return;
+  let bucketId=$('category').value;
+  setSync('Saving…');
+
+  if(bucketMode==='new') {
+    let name=$('newBucket').value.trim();
+    if(!name) { alert('Enter a new bucket name.'); return; }
+    const same=buckets.find(b=>b.name.replace(/^🆕\s*/,'').toLowerCase()===name.toLowerCase());
+    if(same) bucketId=same.id;
+    else {
+      const {data,error}=await sb.from('buckets')
+        .insert({user_id:user.id,name:'🆕 '+name,target:0,type:'Custom'})
+        .select().single();
+      if(error) { setSync('Could not create bucket: '+error.message); return; }
+      bucketId=data.id;
     }
   }
 
-  state.entries.push({
-    id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random())),
-    amount,date,category,note,createdAt:Date.now()
+  const {error}=await sb.from('transactions').insert({
+    user_id:user.id,bucket_id:bucketId,amount,transaction_date:date,note:note||null
   });
-  save();
-  document.getElementById('entryDialog').close();
-  render();
+  if(error) { setSync('Save failed: '+error.message); return; }
+  $('entryDialog').close();
+  await loadData();
 });
 
-document.getElementById('settingsBtn').addEventListener('click',()=>{
-  const list=document.getElementById('settingsList');
-  list.innerHTML='';
-  state.buckets.forEach(b=>{
-    const row=document.createElement('div');
-    row.className='setting';
-    row.innerHTML=`
-      <div>
-        <strong>${esc(b.name)}</strong>
-        <small>${esc(b.type||'Custom')}</small>
-      </div>
+$('settingsBtn').addEventListener('click',()=>{
+  const list=$('settingsList'); list.innerHTML='';
+  buckets.forEach(b=>{
+    const row=document.createElement('div'); row.className='setting';
+    row.innerHTML=`<div><strong>${esc(b.name)}</strong><small>${esc(b.type||'Custom')}</small></div>
       <input data-id="${esc(b.id)}" type="number" min="0" step="1" value="${Number(b.target||0)}">`;
     list.appendChild(row);
   });
-  document.getElementById('settingsDialog').showModal();
+  $('settingsDialog').showModal();
 });
-document.getElementById('cancelSettings').addEventListener('click',()=>document.getElementById('settingsDialog').close());
-document.getElementById('settingsForm').addEventListener('submit',e=>{
-  e.preventDefault();
-  document.querySelectorAll('#settingsList input[data-id]').forEach(inp=>{
-    const b=state.buckets.find(x=>x.id===inp.dataset.id);
-    if(b)b.target=Number(inp.value||0);
-  });
-  save();
-  document.getElementById('settingsDialog').close();
-  render();
+$('cancelSettings').addEventListener('click',()=>$('settingsDialog').close());
+$('settingsForm').addEventListener('submit',async e=>{
+  e.preventDefault(); setSync('Saving targets…');
+  const inputs=[...document.querySelectorAll('#settingsList input[data-id]')];
+  try {
+    for(const inp of inputs) {
+      const {error}=await sb.from('buckets').update({target:Number(inp.value||0)}).eq('id',inp.dataset.id);
+      if(error) throw error;
+    }
+    $('settingsDialog').close(); await loadData();
+  } catch(err) { setSync('Target save failed: '+err.message); }
 });
-monthPicker.addEventListener('change',render);
+$('monthPicker').addEventListener('change',loadData);
+window.addEventListener('focus',()=>{ if(user) loadData(); });
 
-render();
+sb.auth.onAuthStateChange((event,session)=>{
+  if(event==='SIGNED_IN' && session && (!user || user.id!==session.user.id)) boot(session);
+  if(event==='SIGNED_OUT') boot(null);
+});
+
+(async()=>{
+  $('monthPicker').value=currentYM();
+  const {data}=await sb.auth.getSession();
+  await boot(data.session);
+})();
+
 </script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(console.error);
-  });
-}
-</script>
-
 </body>
 </html>
