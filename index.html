@@ -95,6 +95,19 @@ dialog::backdrop{background:rgba(17,24,39,.54)}
 .goal-summary{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px;display:flex;justify-content:space-between;gap:12px}
 .goal-summary strong{font-size:18px}
 .goal-summary span{font-size:12px;color:var(--muted)}
+.india-summary{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.india-summary strong{font-size:20px}
+.india-summary span{font-size:12px;color:var(--muted)}
+.india-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.india-controls input{width:auto;min-width:145px}
+.india-breakdown{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.india-pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;color:var(--muted)}
+.india-pill strong{color:var(--text)}
+.india-entry{border:1px solid var(--line);border-radius:16px;padding:13px;background:#fff}
+.india-entry-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.india-entry-name{font-weight:800}
+.india-entry-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.india-entry-amt{font-weight:850;font-size:18px;white-space:nowrap}
 @media(max-width:620px){
   .grid{grid-template-columns:1fr}
   .hero-grid{grid-template-columns:1fr 1fr}
@@ -140,6 +153,7 @@ dialog::backdrop{background:rgba(17,24,39,.54)}
         </div>
         <div class="top-actions">
           <input id="monthPicker" class="month" type="month">
+          <button class="future-btn" id="indiaBtn">🇮🇳 India Expenses</button>
           <button class="future-btn" id="futureBtn">🎯 Future Goals</button>
           <button class="gear" id="settingsBtn" aria-label="Settings">⚙️</button>
           <button class="logout" id="logoutBtn">Sign out</button>
@@ -190,6 +204,79 @@ dialog::backdrop{background:rgba(17,24,39,.54)}
   </form>
 </dialog>
 
+
+
+<dialog id="indiaDialog">
+  <div class="modal">
+    <h3>🇮🇳 India Expenses</h3>
+    <div class="sub">Track India spending separately, with its own buckets.</div>
+
+    <div class="india-summary">
+      <div>
+        <span>Total for selected month</span><br>
+        <strong>₹<span id="indiaTotal">0</span></strong>
+      </div>
+      <div class="india-controls">
+        <input id="indiaMonthPicker" type="month">
+        <button type="button" class="btn primary" id="addIndiaExpenseBtn">＋ Add expense</button>
+      </div>
+    </div>
+
+    <div id="indiaBreakdown" class="india-breakdown"></div>
+    <div id="indiaExpenseList" class="goal-list"></div>
+
+    <div class="actions">
+      <button type="button" id="closeIndia">Close</button>
+      <button type="button" class="save" id="refreshIndia">Refresh</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="indiaEntryDialog">
+  <form id="indiaEntryForm" class="modal" method="dialog">
+    <h3 id="indiaEntryTitle">Add India expense</h3>
+    <div class="sub" id="indiaEntrySub">Choose an existing India bucket or create a new one.</div>
+
+    <div class="form">
+      <div class="field">
+        <label>Amount (₹)</label>
+        <input id="indiaAmount" type="number" min="0.01" step="0.01" required placeholder="5000">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input id="indiaDate" type="date" required>
+      </div>
+
+      <div class="field full">
+        <label>Bucket</label>
+        <div class="mode">
+          <button id="indiaExistingMode" type="button" class="active">Use existing bucket</button>
+          <button id="indiaNewMode" type="button">Create new bucket</button>
+        </div>
+      </div>
+
+      <div class="field full" id="indiaExistingWrap">
+        <label>Existing India bucket</label>
+        <select id="indiaCategory"></select>
+      </div>
+
+      <div class="field full hidden" id="indiaNewWrap">
+        <label>New bucket name</label>
+        <input id="indiaNewBucket" type="text" maxlength="40" placeholder="Parents, Medical, House, Travel...">
+      </div>
+
+      <div class="field full">
+        <label>Note</label>
+        <input id="indiaNote" type="text" maxlength="100" placeholder="Groceries for home, doctor, train ticket...">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="cancelIndiaEntry">Cancel</button>
+      <button class="save">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="futureDialog">
   <div class="modal">
@@ -268,9 +355,13 @@ let user = null;
 let buckets = [];
 let transactions = [];
 let futureGoals = [];
+let indiaBuckets = [];
+let indiaExpenses = [];
 let bucketMode = 'existing';
+let indiaBucketMode = 'existing';
 let editingTransactionId = null;
 let editingGoalId = null;
+let editingIndiaExpenseId = null;
 
 const $ = id => document.getElementById(id);
 const authView=$('authView'), appView=$('appView'), appWrap=$('appWrap');
@@ -280,6 +371,7 @@ function setAuthMsg(text, kind='') {
 }
 function setSync(text) { $('syncStatus').textContent=text; }
 function fmt(v) { return Number(v||0).toLocaleString(undefined,{maximumFractionDigits:2}); }
+function fmtINR(v) { return Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2}); }
 function esc(s) { return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
 function isoToday() {
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -430,6 +522,7 @@ async function boot(session) {
   authView.classList.add('hidden'); appView.classList.remove('hidden');
   $('signedInAs').textContent=user.email || 'Cloud synced';
   if(!$('monthPicker').value) $('monthPicker').value=currentYM();
+  if($('indiaMonthPicker')) $('indiaMonthPicker').value=currentYM();
   await loadData();
 }
 
@@ -501,6 +594,219 @@ $('entryForm').addEventListener('submit',async e=>{
   editingTransactionId=null;
   $('entryDialog').close();
   await loadData();
+});
+
+
+
+const DEFAULT_INDIA_BUCKETS = [
+  'Family',
+  'Household',
+  'Medical',
+  'Travel',
+  'Gifts',
+  'Other'
+];
+
+async function seedIndiaBucketsIfNeeded() {
+  const {data,error}=await sb.from('india_buckets').select('*').order('created_at');
+  if(error) throw error;
+  if(data.length) {
+    indiaBuckets=data;
+    return;
+  }
+  const rows=DEFAULT_INDIA_BUCKETS.map(name=>({user_id:user.id,name}));
+  const {error:insErr}=await sb.from('india_buckets').insert(rows);
+  if(insErr) throw insErr;
+  const {data:again,error:againErr}=await sb.from('india_buckets').select('*').order('created_at');
+  if(againErr) throw againErr;
+  indiaBuckets=again || [];
+}
+
+async function loadIndiaData() {
+  if(!user) return;
+  try {
+    await seedIndiaBucketsIfNeeded();
+    const ym=$('indiaMonthPicker').value || currentYM();
+    const bounds=monthBounds(ym);
+
+    const {data,error}=await sb.from('india_expenses')
+      .select('*')
+      .gte('expense_date',bounds.start)
+      .lte('expense_date',bounds.end)
+      .order('expense_date',{ascending:false})
+      .order('created_at',{ascending:false});
+
+    if(error) throw error;
+    indiaExpenses=data || [];
+    renderIndiaExpenses();
+  } catch(err) {
+    console.error(err);
+    $('indiaExpenseList').innerHTML='<div class="empty">Could not load India expenses: '+esc(err.message)+'</div>';
+  }
+}
+
+function renderIndiaExpenses() {
+  const total=indiaExpenses.reduce((s,e)=>s+Number(e.amount_inr||0),0);
+  $('indiaTotal').textContent=fmtINR(total);
+
+  const breakdown=$('indiaBreakdown');
+  breakdown.innerHTML='';
+  indiaBuckets.forEach(b=>{
+    const sum=indiaExpenses.filter(e=>e.bucket_id===b.id)
+      .reduce((s,e)=>s+Number(e.amount_inr||0),0);
+    if(sum<=0) return;
+    const pill=document.createElement('div');
+    pill.className='india-pill';
+    pill.innerHTML='<strong>'+esc(b.name)+'</strong> ₹'+fmtINR(sum);
+    breakdown.appendChild(pill);
+  });
+
+  const list=$('indiaExpenseList');
+  list.innerHTML='';
+  if(!indiaExpenses.length) {
+    list.innerHTML='<div class="empty">No India expenses for this month.</div>';
+    return;
+  }
+
+  indiaExpenses.forEach(e=>{
+    const b=indiaBuckets.find(x=>x.id===e.bucket_id);
+    const el=document.createElement('div');
+    el.className='india-entry';
+    el.innerHTML=`
+      <div class="india-entry-top">
+        <div>
+          <div class="india-entry-name">${esc(e.note || (b?b.name:'India expense'))}</div>
+          <div class="india-entry-meta">${esc(b?b.name:'Unknown bucket')} • ${esc(e.expense_date)}</div>
+        </div>
+        <div class="goal-actions">
+          <div class="india-entry-amt">₹${fmtINR(e.amount_inr)}</div>
+          <button class="edit india-edit" type="button" data-id="${esc(e.id)}" aria-label="Edit India expense">✎</button>
+          <button class="del india-del" type="button" data-id="${esc(e.id)}" aria-label="Delete India expense">×</button>
+        </div>
+      </div>`;
+    list.appendChild(el);
+  });
+
+  list.querySelectorAll('.india-edit').forEach(btn=>btn.addEventListener('click',()=>{
+    const e=indiaExpenses.find(x=>x.id===btn.dataset.id);
+    if(!e) return;
+    editingIndiaExpenseId=e.id;
+    $('indiaEntryTitle').textContent='Edit India expense';
+    $('indiaEntrySub').textContent='Update amount, date, bucket, or note.';
+    $('indiaAmount').value=e.amount_inr;
+    $('indiaDate').value=e.expense_date;
+    $('indiaNote').value=e.note || '';
+    fillIndiaCategories();
+    setIndiaBucketMode('existing');
+    $('indiaCategory').value=e.bucket_id;
+    $('indiaEntryDialog').showModal();
+  }));
+
+  list.querySelectorAll('.india-del').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!confirm('Delete this India expense?')) return;
+    const {error}=await sb.from('india_expenses').delete().eq('id',btn.dataset.id);
+    if(error) {
+      alert(error.message);
+      return;
+    }
+    await loadIndiaData();
+  }));
+}
+
+function fillIndiaCategories() {
+  const sel=$('indiaCategory');
+  sel.innerHTML='';
+  indiaBuckets.forEach(b=>{
+    const o=document.createElement('option');
+    o.value=b.id;
+    o.textContent=b.name;
+    sel.appendChild(o);
+  });
+}
+
+function setIndiaBucketMode(mode) {
+  indiaBucketMode=mode;
+  $('indiaExistingMode').classList.toggle('active',mode==='existing');
+  $('indiaNewMode').classList.toggle('active',mode==='new');
+  $('indiaExistingWrap').classList.toggle('hidden',mode!=='existing');
+  $('indiaNewWrap').classList.toggle('hidden',mode!=='new');
+}
+
+function openIndiaEntry() {
+  editingIndiaExpenseId=null;
+  $('indiaEntryTitle').textContent='Add India expense';
+  $('indiaEntrySub').textContent='Choose an existing India bucket or create a new one.';
+  $('indiaAmount').value='';
+  $('indiaDate').value=isoToday();
+  $('indiaNote').value='';
+  $('indiaNewBucket').value='';
+  fillIndiaCategories();
+  setIndiaBucketMode('existing');
+  $('indiaEntryDialog').showModal();
+}
+
+$('indiaBtn').addEventListener('click',async()=>{
+  if(!$('indiaMonthPicker').value) $('indiaMonthPicker').value=currentYM();
+  $('indiaDialog').showModal();
+  await loadIndiaData();
+});
+$('closeIndia').addEventListener('click',()=>$('indiaDialog').close());
+$('refreshIndia').addEventListener('click',loadIndiaData);
+$('indiaMonthPicker').addEventListener('change',loadIndiaData);
+$('addIndiaExpenseBtn').addEventListener('click',openIndiaEntry);
+$('indiaExistingMode').addEventListener('click',()=>setIndiaBucketMode('existing'));
+$('indiaNewMode').addEventListener('click',()=>setIndiaBucketMode('new'));
+$('cancelIndiaEntry').addEventListener('click',()=>$('indiaEntryDialog').close());
+
+$('indiaEntryForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const amount_inr=Number($('indiaAmount').value);
+  const expense_date=$('indiaDate').value;
+  const note=$('indiaNote').value.trim() || null;
+  if(!(amount_inr>0) || !expense_date) return;
+
+  let bucketId=$('indiaCategory').value;
+
+  if(indiaBucketMode==='new') {
+    const name=$('indiaNewBucket').value.trim();
+    if(!name) {
+      alert('Enter a name for the new India bucket.');
+      return;
+    }
+
+    const same=indiaBuckets.find(b=>b.name.toLowerCase()===name.toLowerCase());
+    if(same) {
+      bucketId=same.id;
+    } else {
+      const {data,error}=await sb.from('india_buckets')
+        .insert({user_id:user.id,name})
+        .select().single();
+      if(error) {
+        alert('Could not create India bucket: '+error.message);
+        return;
+      }
+      bucketId=data.id;
+    }
+  }
+
+  let error;
+  if(editingIndiaExpenseId) {
+    ({error}=await sb.from('india_expenses')
+      .update({bucket_id:bucketId,amount_inr,expense_date,note})
+      .eq('id',editingIndiaExpenseId));
+  } else {
+    ({error}=await sb.from('india_expenses')
+      .insert({user_id:user.id,bucket_id:bucketId,amount_inr,expense_date,note}));
+  }
+
+  if(error) {
+    alert('Could not save India expense: '+error.message);
+    return;
+  }
+
+  editingIndiaExpenseId=null;
+  $('indiaEntryDialog').close();
+  await loadIndiaData();
 });
 
 
@@ -641,6 +947,7 @@ sb.auth.onAuthStateChange((event,session)=>{
 
 (async()=>{
   $('monthPicker').value=currentYM();
+  if($('indiaMonthPicker')) $('indiaMonthPicker').value=currentYM();
   const {data}=await sb.auth.getSession();
   await boot(data.session);
 })();
