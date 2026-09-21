@@ -942,6 +942,798 @@ $('settingsForm').addEventListener('submit',async e=>{
     $('settingsDialog').close(); await loadData();
   } catch(err) { setSync('Target save failed: '+err.message); }
 });
+
+function openMonthlyReport() {
+
+  const ym = $('monthPicker').value || currentYM();
+
+  // Convert 2026-09 -> September 2026
+  const [year, month] = ym.split('-').map(Number);
+
+  const monthLabel = new Date(year, month - 1, 1)
+    .toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
+
+
+  // Money formatting
+  function money(value) {
+    return Number(value || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+
+  // Date formatting
+  function reportDate(dateString) {
+    if(!dateString) return '';
+
+    const [y, m, d] = dateString.split('-').map(Number);
+
+    return new Date(y, m - 1, d)
+      .toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit'
+      });
+  }
+
+
+  // Total recorded this month
+  const totalRecorded = transactions.reduce(
+    (sum, t) => sum + Number(t.amount || 0),
+    0
+  );
+
+
+  // Monthly target / plan
+  const totalPlan = buckets.reduce(
+    (sum, b) => sum + Number(b.target || 0),
+    0
+  );
+
+
+  // Group transactions by bucket
+  const groupedBuckets = buckets
+    .map(bucket => {
+
+      const items = transactions
+        .filter(t => t.bucket_id === bucket.id)
+        .slice()
+        .sort((a, b) =>
+          String(a.transaction_date)
+            .localeCompare(String(b.transaction_date))
+        );
+
+      const subtotal = items.reduce(
+        (sum, t) => sum + Number(t.amount || 0),
+        0
+      );
+
+      return {
+        bucket,
+        items,
+        subtotal
+      };
+
+    })
+
+    // Only show buckets that actually have entries
+    .filter(group => group.items.length > 0);
+
+
+  // -------------------------------
+  // Bucket summary table
+  // -------------------------------
+
+  const summaryRows = groupedBuckets.map(group => {
+
+    const target = Number(group.bucket.target || 0);
+    const remaining = target - group.subtotal;
+
+    return `
+      <tr>
+        <td>${esc(group.bucket.name)}</td>
+
+        <td class="amount">
+          $${money(group.subtotal)}
+        </td>
+
+        <td class="amount">
+          $${money(target)}
+        </td>
+
+        <td class="amount ${remaining < 0 ? 'over' : ''}">
+          ${
+            remaining >= 0
+              ? '$' + money(remaining)
+              : '-$' + money(Math.abs(remaining))
+          }
+        </td>
+      </tr>
+    `;
+
+  }).join('');
+
+
+  // -------------------------------
+  // Detailed bucket sections
+  // -------------------------------
+
+  const bucketSections = groupedBuckets.map(group => {
+
+    const transactionRows = group.items.map(t => {
+
+      return `
+        <tr>
+          <td class="date">
+            ${reportDate(t.transaction_date)}
+          </td>
+
+          <td>
+            ${esc(t.note || 'Transaction')}
+          </td>
+
+          <td class="amount">
+            $${money(t.amount)}
+          </td>
+        </tr>
+      `;
+
+    }).join('');
+
+
+    return `
+      <section class="bucket-section">
+
+        <div class="bucket-header">
+
+          <div>
+            <div class="bucket-name">
+              ${esc(group.bucket.name)}
+            </div>
+
+            <div class="bucket-type">
+              ${esc(group.bucket.type || 'Custom')}
+            </div>
+          </div>
+
+          <div class="bucket-total">
+            $${money(group.subtotal)}
+          </div>
+
+        </div>
+
+
+        <table class="transactions-table">
+
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th class="amount">Amount</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${transactionRows}
+          </tbody>
+
+        </table>
+
+      </section>
+    `;
+
+  }).join('');
+
+
+  // If there are no transactions
+  const detailsHTML = groupedBuckets.length
+    ? bucketSections
+    : `
+      <div class="empty-report">
+        No transactions recorded for ${monthLabel}.
+      </div>
+    `;
+
+
+  // Open printable report
+  const reportWindow = window.open('', '_blank');
+
+  if(!reportWindow) {
+    alert(
+      'The report could not open. Please allow pop-ups for this website.'
+    );
+    return;
+  }
+
+
+  reportWindow.document.write(`
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
+
+<title>My Money - ${monthLabel}</title>
+
+
+<style>
+
+  * {
+    box-sizing: border-box;
+  }
+
+
+  body {
+
+    margin: 0;
+    padding: 32px;
+
+    background: #f3f4f6;
+    color: #111827;
+
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Arial,
+      sans-serif;
+
+  }
+
+
+  .page {
+
+    max-width: 850px;
+    margin: auto;
+
+    background: white;
+
+    padding: 40px;
+
+    border-radius: 16px;
+
+  }
+
+
+  /* --------------------
+     Toolbar
+  -------------------- */
+
+  .toolbar {
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 28px;
+
+  }
+
+
+  .toolbar button {
+
+    border: 0;
+
+    background: #111827;
+    color: white;
+
+    padding: 11px 18px;
+
+    border-radius: 9px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+  }
+
+
+  /* --------------------
+     Report heading
+  -------------------- */
+
+  .eyebrow {
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    color: #6b7280;
+
+    letter-spacing: 1px;
+
+  }
+
+
+  h1 {
+
+    margin: 5px 0 3px;
+
+    font-size: 28px;
+
+  }
+
+
+  .month-title {
+
+    color: #6b7280;
+
+    font-size: 15px;
+
+  }
+
+
+  /* --------------------
+     Main statistics
+  -------------------- */
+
+  .stats {
+
+    display: grid;
+
+    grid-template-columns:
+      repeat(3, 1fr);
+
+    gap: 10px;
+
+    margin: 24px 0;
+
+  }
+
+
+  .stat {
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    padding: 13px;
+
+  }
+
+
+  .stat-label {
+
+    font-size: 11px;
+
+    color: #6b7280;
+
+    margin-bottom: 5px;
+
+  }
+
+
+  .stat-value {
+
+    font-size: 19px;
+
+    font-weight: 800;
+
+  }
+
+
+  /* --------------------
+     Section titles
+  -------------------- */
+
+  h2 {
+
+    margin-top: 30px;
+
+    margin-bottom: 10px;
+
+    font-size: 16px;
+
+  }
+
+
+  /* --------------------
+     Tables
+  -------------------- */
+
+  table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+  }
+
+
+  th {
+
+    color: #6b7280;
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: .4px;
+
+    text-align: left;
+
+    padding: 7px 8px;
+
+    border-bottom: 1px solid #d1d5db;
+
+  }
+
+
+  td {
+
+    padding: 7px 8px;
+
+    border-bottom: 1px solid #eeeeee;
+
+    font-size: 12px;
+
+  }
+
+
+  .amount {
+
+    text-align: right;
+
+    white-space: nowrap;
+
+  }
+
+
+  .date {
+
+    width: 80px;
+
+    color: #6b7280;
+
+    white-space: nowrap;
+
+  }
+
+
+  .over {
+
+    color: #b91c1c;
+
+  }
+
+
+  /* --------------------
+     Bucket detail
+  -------------------- */
+
+  .bucket-section {
+
+    margin-top: 20px;
+
+  }
+
+
+  .bucket-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-end;
+
+    gap: 15px;
+
+    padding-bottom: 7px;
+
+    border-bottom: 2px solid #111827;
+
+  }
+
+
+  .bucket-name {
+
+    font-size: 15px;
+
+    font-weight: 800;
+
+  }
+
+
+  .bucket-type {
+
+    margin-top: 2px;
+
+    font-size: 10px;
+
+    color: #6b7280;
+
+  }
+
+
+  .bucket-total {
+
+    font-size: 16px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+  }
+
+
+  .transactions-table {
+
+    margin-bottom: 14px;
+
+  }
+
+
+  .empty-report {
+
+    padding: 30px;
+
+    border: 1px dashed #d1d5db;
+
+    border-radius: 10px;
+
+    color: #6b7280;
+
+    text-align: center;
+
+  }
+
+
+  .footer {
+
+    margin-top: 30px;
+
+    padding-top: 10px;
+
+    border-top: 1px solid #e5e7eb;
+
+    text-align: center;
+
+    font-size: 9px;
+
+    color: #9ca3af;
+
+  }
+
+
+  /* --------------------
+     Phone/tablet
+  -------------------- */
+
+  @media(max-width: 600px) {
+
+    body {
+      padding: 10px;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    .stats {
+      grid-template-columns: 1fr;
+    }
+
+  }
+
+
+  /* --------------------
+     Printing / PDF
+  -------------------- */
+
+  @media print {
+
+    @page {
+      margin: 12mm;
+    }
+
+    body {
+
+      background: white;
+
+      padding: 0;
+
+    }
+
+    .page {
+
+      max-width: none;
+
+      margin: 0;
+
+      padding: 0;
+
+      border-radius: 0;
+
+    }
+
+    .toolbar {
+
+      display: none !important;
+
+    }
+
+    .bucket-header {
+
+      break-after: avoid;
+
+    }
+
+    thead {
+
+      display: table-header-group;
+
+    }
+
+  }
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="page">
+
+
+  <div class="toolbar">
+
+    <button onclick="window.close()">
+      ← Close
+    </button>
+
+    <button onclick="window.print()">
+      🖨 Print / Save PDF
+    </button>
+
+  </div>
+
+
+  <header>
+
+    <div class="eyebrow">
+      PERSONAL BUDGET
+    </div>
+
+    <h1>
+      My Money
+    </h1>
+
+    <div class="month-title">
+      Monthly Report • ${monthLabel}
+    </div>
+
+  </header>
+
+
+  <div class="stats">
+
+    <div class="stat">
+
+      <div class="stat-label">
+        MONTHLY PLAN
+      </div>
+
+      <div class="stat-value">
+        $${money(totalPlan)}
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="stat-label">
+        RECORDED
+      </div>
+
+      <div class="stat-value">
+        $${money(totalRecorded)}
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="stat-label">
+        TRANSACTIONS
+      </div>
+
+      <div class="stat-value">
+        ${transactions.length}
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <h2>
+    Bucket Summary
+  </h2>
+
+
+  <table>
+
+    <thead>
+
+      <tr>
+
+        <th>
+          Bucket
+        </th>
+
+        <th class="amount">
+          Recorded
+        </th>
+
+        <th class="amount">
+          Plan
+        </th>
+
+        <th class="amount">
+          Remaining
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      ${
+        summaryRows ||
+        `
+          <tr>
+            <td colspan="4">
+              No transactions recorded.
+            </td>
+          </tr>
+        `
+      }
+
+    </tbody>
+
+  </table>
+
+
+  <h2>
+    Transaction Details
+  </h2>
+
+
+  ${detailsHTML}
+
+
+  <div class="footer">
+    Generated from My Money • ${monthLabel}
+  </div>
+
+
+</div>
+
+</body>
+
+</html>
+  `);
+
+
+  reportWindow.document.close();
+}
 $('monthPicker').addEventListener('change',loadData);
 window.addEventListener('focus',()=>{ if(user) loadData(); });
 
