@@ -1734,6 +1734,7 @@ function openMonthlyReport() {
 
   reportWindow.document.close();
 }
+$('reportBtn').addEventListener('click', openMonthlyReport);  
 $('monthPicker').addEventListener('change',loadData);
 window.addEventListener('focus',()=>{ if(user) loadData(); });
 
